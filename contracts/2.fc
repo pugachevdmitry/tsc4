@@ -12,8 +12,28 @@
 () recv_internal() {
 }
 
+(int) size(tuple t) asm "TLEN";
+
 ;; testable
 (tuple) matrix_multiplier(tuple matrixA, tuple matrixB) method_id {
-  return null();
+    tuple ans = empty_tuple();
+    int i = 0;
+    repeat(matrixA.size()) {
+        tuple ans_i = empty_tuple();
+        int j = 0;
+        repeat(matrixB.at(0).size()) {
+            int k = 0;
+            int ans_i_j = 0;
+            repeat(matrixB.at(0).size()) {
+                ans_i_j = matrixB.at(k).at(j) * matrixA.at(i).at(k);
+                k += 1;
+            }
+            ans_i~tpush(ans_i_j);
+            j += 1;
+        }
+        ans~tpush(ans_i);
+        i += 1;
+    }
+    return ans;
 }
 
