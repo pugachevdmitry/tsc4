@@ -16,7 +16,7 @@ const A1 = 65;
 (cell) rotate(cell text, int shift) {
     slice sl = text.begin_parse();
     builder ans = begin_cell();
-    repeat(sl.slice_bits()) {
+    repeat(sl.slice_bits() / 8) {
         int c = sl~load_uint(8);
         if((A0 <= c) & (c < A0 + A)){
             c += shift;
