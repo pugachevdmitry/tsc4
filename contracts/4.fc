@@ -29,7 +29,8 @@ const A1 = 65;
         ans~store_uint(c, 8);
     }
     if(~ sl.slice_refs_empty?()) {
-        ans~store_ref(rotate(sl~load_ref(), shift));
+        cell rec = rotate(sl~load_ref(), shift);
+        ans = ans.store_ref(rec);
     }
     return ans.end_cell();
 }
@@ -47,4 +48,3 @@ const A1 = 65;
     shift %= A;
     return rotate(text, shift);
 }
-
