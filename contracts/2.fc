@@ -25,7 +25,7 @@
             int k = 0;
             int ans_i_j = 0;
             repeat(matrixA.at(0).size()) {
-                ans_i_j = matrixB.at(k).at(j) * matrixA.at(i).at(k);
+                ans_i_j += matrixB.at(k).at(j) * matrixA.at(i).at(k);
                 k += 1;
             }
             ans_i~tpush(ans_i_j);
