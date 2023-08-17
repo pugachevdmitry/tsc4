@@ -19,8 +19,77 @@
 () recv_internal() {
 }
 
-;; testable
-(cell) find_and_replace(int flag, int value, cell linked_list) method_id {
-  return begin_cell().end_cell();
+int has_cnt_bits(slice sl, int cnt) {
+    if(sl.slice_refs_empty?()) {
+        return cnt <= sl.slice_bits();
+    } else {
+        (_, cell r) = sl.load_ref();
+        return cnt <= (sl.slice_bits() + r.begin_parse().slice_bits());
+    }
 }
 
+(slice, int) get_cnt_bits(slice sl, int cnt) {
+    if(sl.slice_bits() >= cnt) {
+        return sl.load_uint(cnt);
+    } else {
+        int cnt1 = cnt - sl.slice_bits();
+        int ans = sl~load_uint(sl.slice_bits());
+        sl = sl.preload_ref().begin_parse();
+        ans = (ans << cnt1) | sl~load_uint(cnt1);
+        return (sl, cnt1);
+    }
+}
+
+int ubitsize(int x) asm "UBITSIZE";
+
+cell link(tuple list) {
+    cell linked_list = car(list).end_cell();
+    (_, list) = uncons(list);
+    while(~ null?(list)) {
+        linked_list = car(list).store_ref(linked_list).end_cell();
+        (_, list) = uncons(list);
+    }
+    return linked_list;
+}
+
+const N = 1023;
+
+;; testable
+(cell) find_and_replace(int flag, int value, cell linked_list) method_id {
+    int fsz = ubitsize(flag);
+    int vsz = ubitsize(value);
+    tuple list = cons(begin_cell(), null());
+    slice sl = linked_list.begin_parse();
+    while(~ sl.slice_data_empty?()) {
+        int f = sl.has_cnt_bits(fsz);
+        if(f) {
+            (_, int e) = sl.get_cnt_bits(fsz);
+            f = (e == flag);
+        }
+        int last_sz = car(list).end_cell().begin_parse().slice_bits();
+        if(f) {
+            sl~get_cnt_bits(fsz);
+            if(last_sz + vsz > N) {
+                int vsz1 = N - last_sz;
+                int vsz2 = vsz - vsz1;
+                int value1 = value >> vsz2;
+                int value2 = value ^ (value1 << vsz2);
+                list = cons(car(list).store_uint(value1, vsz1), cdr(list));
+                list = cons(begin_cell().store_uint(value2, vsz2), list);
+            } else {
+                list = cons(car(list).store_uint(value, vsz), cdr(list));
+            }
+        } else {
+            if(last_sz == N) {
+                list = cons(begin_cell(), list);
+            }
+            list = cons(car(list).store_uint(sl~load_uint(1), 1), cdr(list));
+        }
+        if(sl.slice_data_empty?()) {
+            if(~ sl.slice_refs_empty?()) {
+                sl = sl.preload_ref().begin_parse();
+            }
+        }
+    }
+    return list.link();
+}
